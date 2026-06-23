@@ -35,7 +35,8 @@ public class SecurityConfig {
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
+//                .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
+                    .requestMatchers("/api/auth/**", "/uploads/**", "/api/profile", "/api/profile/**").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

@@ -13,4 +13,9 @@ public class User {
     private String password;
     @Column(nullable = false)
     private String type; // admin / staff
+    private String facultyDetailId;       // which program/faculty this teacher manages
+    private Boolean canAttendance = false;
+    private Boolean canAssignment = false;
+    private Boolean canExam = false;
+    private Boolean canResult = false;
 }
