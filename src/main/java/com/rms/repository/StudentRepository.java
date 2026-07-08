@@ -8,7 +8,8 @@ import java.util.List;
 
 public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> findByGradeSectionId(Long gradeSectionId);
-    List<Student> findByFacultyDetailId(Long facultyDetailId);
+    @Query("SELECT s FROM Student s WHERE s.facultyDetail.id = :fdId")
+    List<Student> findByFacultyDetailId(@Param("fdId") Long fdId);
     @Query("SELECT s FROM Student s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%',:name,'%'))")
     List<Student> findByNameContaining(@Param("name") String name);
 }

@@ -21,10 +21,10 @@ public class Student {
     private String contact;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "facultyDetailsId")
+    @JoinColumn(name = "faculty_details_id")
     private FacultyDetail facultyDetail;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "gradesId")
+    @JoinColumn(name = "grades_id")
     private GradeSectionMapping gradeSection;
 }

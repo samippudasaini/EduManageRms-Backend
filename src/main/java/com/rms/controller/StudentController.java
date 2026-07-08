@@ -27,8 +27,10 @@ public class StudentController {
     @PostMapping public ResponseEntity<?> create(@RequestBody Map<String,Object> body) {
         var s = Student.builder().name((String) body.get("name")).address((String) body.get("address"))
                 .guardianName((String) body.get("guardianName")).contact((String) body.get("contact")).build();
-        if (body.get("facultyDetailsId") != null) fdRepo.findById(Long.parseLong(body.get("facultyDetailsId").toString())).ifPresent(s::setFacultyDetail);
-        if (body.get("gradesId") != null) gsRepo.findById(Long.parseLong(body.get("gradesId").toString())).ifPresent(s::setGradeSection);
+        if (body.get("facultyDetailsId") != null) fdRepo.findById(Long.parseLong(body.get("facultyDetailsId")
+                .toString())).ifPresent(s::setFacultyDetail);
+        if (body.get("gradesId") != null) gsRepo.findById(Long.parseLong(body.get("gradesId")
+                .toString())).ifPresent(s::setGradeSection);
         return ResponseEntity.ok(toMap(repo.save(s)));
     }
 
