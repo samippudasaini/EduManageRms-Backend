@@ -10,6 +10,5 @@ public interface FacultyDetailRepository extends JpaRepository<FacultyDetail, Lo
     List<FacultyDetail> findAllWithStream();
 
     List<FacultyDetail> findByStreamId(Long streamId);
-//    List<FacultyDetail> findByStreamId(Long streamId);
-//    java.util.Optional<FacultyDetail> findByName(String name);
+
 }

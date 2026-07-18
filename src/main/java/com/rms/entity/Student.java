@@ -19,6 +19,7 @@ public class Student {
     private String address;
     private String guardianName;
     private String contact;
+    private String email;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "faculty_details_id")
