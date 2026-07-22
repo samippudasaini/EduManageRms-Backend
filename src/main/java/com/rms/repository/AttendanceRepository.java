@@ -10,17 +10,25 @@ import java.util.List;
 import java.util.Optional;
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
+
     @Query("SELECT a FROM Attendance a WHERE a.student.gradeSection.id = :gsId AND a.date = :date")
     List<Attendance> findByGradeSectionIdAndDate(@Param("gsId") Long gsId, @Param("date") LocalDate date);
 
     Optional<Attendance> findByStudentIdAndDate(Long studentId, LocalDate date);
 
-    @Query("SELECT COUNT(a), SUM(CASE WHEN a.status = true THEN 1 ELSE 0 END), " +
-            "SUM(CASE WHEN a.status = false THEN 1 ELSE 0 END) " +
+    @Query("SELECT a FROM Attendance a WHERE a.student.gradeSection.id = :gsId " +
+            "AND a.date >= :start AND a.date <= :end ORDER BY a.student.name, a.date")
+    List<Attendance> findByGradeSectionAndRange(
+            @Param("gsId") Long gsId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
+
+    @Query("SELECT COUNT(a), " +
+            "SUM(CASE WHEN a.attendanceStatus = 'P' THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN a.attendanceStatus = 'A' THEN 1 ELSE 0 END) " +
             "FROM Attendance a WHERE a.student.id = :studentId")
     Object[] getAttendanceSummary(@Param("studentId") Long studentId);
 
-    // NEW: delete all attendance records for a student
     @Modifying
     @Transactional
     @Query("DELETE FROM Attendance a WHERE a.student.id = :studentId")
