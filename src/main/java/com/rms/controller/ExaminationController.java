@@ -13,7 +13,7 @@ import java.util.*;
 public class ExaminationController {
 
     @Autowired private ExaminationRepository repo;
-    @Autowired private FacultyDetailRepository fdRepo;
+    @Autowired private ProgramRepository fdRepo;
     @Autowired private ResultService resultService;
 
     @GetMapping
@@ -69,7 +69,7 @@ public class ExaminationController {
     @PostMapping("/{examId}/faculty-details")
     public ResponseEntity<?> addFacultyDetail(@PathVariable Long examId, @RequestBody Map<String, Object> body) {
         Examination exam = repo.findById(examId).orElseThrow(() -> new RuntimeException("Exam not found"));
-        FacultyDetail fd = fdRepo.findById(Long.parseLong(body.get("facultyDetailId").toString()))
+        Program fd = fdRepo.findById(Long.parseLong(body.get("facultyDetailId").toString()))
                 .orElseThrow(() -> new RuntimeException("FacultyDetail not found"));
         boolean alreadyExists = exam.getFacultyDetails().stream().anyMatch(f -> f.getId().equals(fd.getId()));
         if (!alreadyExists) {

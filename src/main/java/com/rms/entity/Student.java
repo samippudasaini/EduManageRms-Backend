@@ -23,7 +23,7 @@ public class Student {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "faculty_details_id")
-    private FacultyDetail facultyDetail;
+    private Program program;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "grades_id")

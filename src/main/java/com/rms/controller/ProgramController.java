@@ -9,13 +9,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/faculty-details")
-public class FacultyDetailController {
+@RequestMapping("/api/programs")
+public class ProgramController {
 
-    @Autowired private FacultyDetailRepository repo;
+    @Autowired private ProgramRepository repo;
     @Autowired private StreamRepository streamRepo;
     @Autowired private SubjectRepository subjectRepo;
-    @Autowired private FacultyDetailSubjectRepository fdsRepo;
+    @Autowired private ProgramSubjectRepository fdsRepo;
+    @Autowired private StudentRepository studentRepo;
+    @Autowired private com.rms.service.ProgramDeletionService deletionService;
 
     @GetMapping
     @Transactional
@@ -34,10 +36,10 @@ public class FacultyDetailController {
     @PostMapping
     @Transactional
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body) {
-        FacultyDetail fd = FacultyDetail.builder().name((String) body.get("name")).build();
+        Program fd = Program.builder().name((String) body.get("name")).build();
         if (body.get("streamId") != null)
             streamRepo.findById(Long.parseLong(body.get("streamId").toString())).ifPresent(fd::setStream);
-        FacultyDetail saved = repo.save(fd);
+        Program saved = repo.save(fd);
         applySubjectIds(saved, body.get("subjectIds"));
         return ResponseEntity.ok(toMap(repo.findById(saved.getId()).orElse(saved)));
     }
@@ -49,16 +51,39 @@ public class FacultyDetailController {
             if (body.get("name") != null) fd.setName((String) body.get("name"));
             if (body.get("streamId") != null)
                 streamRepo.findById(Long.parseLong(body.get("streamId").toString())).ifPresent(fd::setStream);
-            FacultyDetail saved = repo.save(fd);
+            Program saved = repo.save(fd);
             if (body.get("subjectIds") != null) applySubjectIds(saved, body.get("subjectIds"));
             return ResponseEntity.ok(toMap(repo.findById(saved.getId()).orElse(saved)));
         }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    @Transactional
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        repo.deleteById(id);
+    public ResponseEntity<?> delete(@PathVariable Long id,
+                                    @RequestParam(name = "force", defaultValue = "false") boolean force) {
+        if (!repo.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
+            deletionService.deleteAndFlush(id, force);
+        } catch (com.rms.service.ProgramDeletionService.BlockedByResultsException e) {
+            return ResponseEntity.status(409).body(Map.of(
+                    "message", "This program has " + e.resultCount +
+                            " recorded result(s). Delete anyway? Those results will be permanently deleted.",
+                    "requiresForce", true,
+                    "resultCount", e.resultCount
+            ));
+        } catch (com.rms.service.ProgramDeletionService.BlockedByStudentsException e) {
+            return ResponseEntity.status(409).body(Map.of(
+                    "message", "This program has " + e.studentCount +
+                            " student(s) enrolled. Delete anyway? They will be unenrolled, not deleted.",
+                    "requiresForce", true,
+                    "studentCount", e.studentCount
+            ));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.status(409).body(Map.of(
+                    "message", "Cannot delete this program because it is still referenced elsewhere."
+            ));
+        }
         return ResponseEntity.ok(Map.of("message", "Deleted"));
     }
 
@@ -71,13 +96,12 @@ public class FacultyDetailController {
                     || "true".equalsIgnoreCase(String.valueOf(body.get("optional")));
             Subject subject = subjectRepo.findById(subjectId).orElse(null);
             if (subject == null) return ResponseEntity.badRequest().body(Map.of("message", "Subject not found"));
-            var existing = fdsRepo.findByFacultyDetailIdAndSubjectId(id, subjectId);
+            var existing = fdsRepo.findByProgramIdAndSubjectId(id, subjectId);
             if (existing.isPresent()) {
                 existing.get().setOptional(isOptional);
                 fdsRepo.save(existing.get());
             } else {
-                fdsRepo.save(FacultyDetailSubject.builder().facultyDetail(fd).subject(subject).optional(isOptional).build());
-            }
+                fdsRepo.save(ProgramSubject.builder().program(fd).subject(subject).optional(isOptional).build());            }
             return ResponseEntity.ok(toMap(repo.findById(id).orElse(fd)));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -86,7 +110,7 @@ public class FacultyDetailController {
     @Transactional
     public ResponseEntity<?> updateSubjectType(@PathVariable Long id, @PathVariable Long subjectId,
                                                @RequestBody Map<String, Object> body) {
-        return fdsRepo.findByFacultyDetailIdAndSubjectId(id, subjectId).map(fds -> {
+        return fdsRepo.findByProgramIdAndSubjectId(id, subjectId).map(fds -> {
             fds.setOptional(Boolean.TRUE.equals(body.get("optional"))
                     || "true".equalsIgnoreCase(String.valueOf(body.get("optional"))));
             fdsRepo.save(fds);
@@ -99,24 +123,24 @@ public class FacultyDetailController {
     @Transactional
     public ResponseEntity<?> removeSubject(@PathVariable Long fdId, @PathVariable Long subjectId) {
         return repo.findById(fdId).map(fd -> {
-            fdsRepo.deleteByFacultyDetailIdAndSubjectId(fdId, subjectId);
+            fdsRepo.deleteByProgramIdAndSubjectId(fdId, subjectId);
             return ResponseEntity.ok(toMap(repo.findById(fdId).orElse(fd)));
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    private void applySubjectIds(FacultyDetail fd, Object subjectIdsObj) {
+    private void applySubjectIds(Program fd, Object subjectIdsObj) {
         if (subjectIdsObj == null) return;
         List<Long> ids = ((List<?>) subjectIdsObj).stream().map(o -> Long.parseLong(o.toString())).toList();
-        List<FacultyDetailSubject> current = fdsRepo.findByFacultyDetailId(fd.getId());
-        for (FacultyDetailSubject fds : current)
+        List<ProgramSubject> current = fdsRepo.findByProgramId(fd.getId());
+        for (ProgramSubject fds : current)
             if (!ids.contains(fds.getSubject().getId())) fdsRepo.delete(fds);
         for (Long subjectId : ids)
             if (current.stream().noneMatch(fds -> fds.getSubject().getId().equals(subjectId)))
                 subjectRepo.findById(subjectId).ifPresent(s -> fdsRepo.save(
-                        FacultyDetailSubject.builder().facultyDetail(fd).subject(s).optional(false).build()));
+                        ProgramSubject.builder().program(fd).subject(s).optional(false).build()));
     }
 
-    private Map<String, Object> toMap(FacultyDetail fd) {
+    private Map<String, Object> toMap(Program fd) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", fd.getId());
         m.put("name", fd.getName());

@@ -10,14 +10,14 @@
 USE rms;
 
 -- 1. Drop the old composite primary key
-ALTER TABLE faculty_detail_subjects DROP PRIMARY KEY;
+ALTER TABLE progeam_subjects DROP PRIMARY KEY;
 
 -- 2. Add the new surrogate primary key
-ALTER TABLE faculty_detail_subjects
+ALTER TABLE program_subjects
   ADD COLUMN id BIGINT AUTO_INCREMENT PRIMARY KEY FIRST;
 
 -- 3. Add the optional/compulsory flag (defaults everything to Compulsory)
-ALTER TABLE faculty_detail_subjects
+ALTER TABLE program_subjects
   ADD COLUMN is_optional BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- After this, start the application once with ddl-auto=update so Hibernate

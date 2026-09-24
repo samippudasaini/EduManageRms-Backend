@@ -14,7 +14,7 @@ public class StreamController {
 
     @Autowired private StreamRepository repo;
     @Autowired private FacultyRepository facultyRepo;
-    @Autowired private FacultyDetailRepository facultyDetailRepo;
+    @Autowired private ProgramRepository programRepo;
 
     @GetMapping
     @Transactional
@@ -67,9 +67,9 @@ public class StreamController {
     @Transactional
     public ResponseEntity<?> delete(@PathVariable Long id) {
         // Null out stream FK on any programs using this stream before deleting
-        facultyDetailRepo.findByStreamId(id).forEach(fd -> {
+        programRepo.findByStreamId(id).forEach(fd -> {
             fd.setStream(null);
-            facultyDetailRepo.save(fd);
+            programRepo.save(fd);
         });
         repo.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Stream deleted"));

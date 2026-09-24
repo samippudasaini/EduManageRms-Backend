@@ -68,7 +68,7 @@ public class Result {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "faculty_detail_id")
-    private FacultyDetail facultyDetail;
+    private Program program;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id")
@@ -90,4 +90,6 @@ public class Result {
     )
     @Builder.Default
     private List<Marks> marks = new ArrayList<>();
+
+
 }

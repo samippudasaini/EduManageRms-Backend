@@ -28,5 +28,5 @@ public class Examination {
         inverseJoinColumns = @JoinColumn(name = "faculty_detail_id")
     )
     @Builder.Default
-    private List<FacultyDetail> facultyDetails = new ArrayList<>();
+    private List<Program> facultyDetails = new ArrayList<>();
 }

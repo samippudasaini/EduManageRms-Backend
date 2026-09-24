@@ -539,26 +539,25 @@ public class ResultService {
     @Autowired private ResultRepository resultRepo;
     @Autowired private MarksRepository marksRepo;
     @Autowired private StudentRepository studentRepo;
-    @Autowired private FacultyDetailRepository fdRepo;
-    @Autowired private FacultyDetailSubjectRepository fdsRepo;
+    @Autowired private ProgramRepository pRepo;
+    @Autowired private ProgramSubjectRepository fdsRepo;
 
     @Transactional
-    public void createResultsForExamination(Examination exam, FacultyDetail fd) {
-        // Get ALL students in this program
-        List<Student> students = studentRepo.findByFacultyDetailId(fd.getId());
+    public void createResultsForExamination(Examination exam, Program p) {        // Get ALL students in this program
+        List<Student> students = studentRepo.findByProgramId(p.getId());
         System.out.println("[ResultService] Found " + students.size() +
-                " students for faculty_detail_id=" + fd.getId());
+                " students for program_id=" + p.getId());
 
         // Get ALL subjects for this program
-        List<FacultyDetailSubject> subjectMappings = fdsRepo.findByFacultyDetailId(fd.getId());
+        List<ProgramSubject> subjectMappings = fdsRepo.findByProgramId(p.getId());
         System.out.println("[ResultService] Found " + subjectMappings.size() +
-                " subjects for faculty_detail_id=" + fd.getId());
+                " subjects for faculty_detail_id=" + p.getId());
 
         for (Student student : students) {
             // Check if result already exists
             Optional<Result> existing = resultRepo
-                    .findByExaminationIdAndFacultyDetailIdAndStudentId(
-                            exam.getId(), fd.getId(), student.getId());
+                    .findByExaminationIdAndProgramIdAndStudentId(
+                            exam.getId(), p.getId(), student.getId());
             if (existing.isPresent()) {
                 System.out.println("[ResultService] Result already exists for student=" + student.getName());
                 continue;
@@ -567,7 +566,7 @@ public class ResultService {
             // Create result row
             Result result = new Result();
             result.setExamination(exam);
-            result.setFacultyDetail(fd);
+            result.setProgram(p);
             result.setStudent(student);
             result.setGrade("F");
             result.setPercentage(0.0);
@@ -576,7 +575,7 @@ public class ResultService {
             Result saved = resultRepo.save(result);
 
             // Create one Marks row per subject and link to result
-            for (FacultyDetailSubject fds : subjectMappings) {
+            for (ProgramSubject fds : subjectMappings) {
                 Subject subject = fds.getSubject();
                 Marks marks = new Marks();
                 marks.setSubject(subject);
@@ -641,7 +640,7 @@ public class ResultService {
 
     @Transactional
     public List<Map<String, Object>> getResultsWithMarks(Long examId, Long fdId) {
-        List<Result> results = resultRepo.findByExaminationIdAndFacultyDetailId(examId, fdId);
+        List<Result> results = resultRepo.findByExaminationIdAndProgramId(examId, fdId);
         System.out.println("[ResultService] getResultsWithMarks: found " + results.size() + " results");
         List<Map<String, Object>> data = new ArrayList<>();
         for (Result result : results) {
@@ -686,7 +685,7 @@ public class ResultService {
 
     @Transactional
     public List<Map<String, Object>> getAllMarksheetData(Long examId, Long fdId) {
-        return resultRepo.findByExaminationIdAndFacultyDetailId(examId, fdId)
+        return resultRepo.findByExaminationIdAndProgramId(examId, fdId)
                 .stream().map(this::buildMarksheet).toList();
     }
 
@@ -694,7 +693,7 @@ public class ResultService {
         Map<String, Object> ms = new LinkedHashMap<>();
         Student s = result.getStudent();
         Examination exam = result.getExamination();
-        FacultyDetail fd = result.getFacultyDetail();
+        Program fd = result.getProgram();
 
         ms.put("resultId", result.getId());
         ms.put("grade", result.getGrade());

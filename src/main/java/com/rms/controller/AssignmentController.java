@@ -36,7 +36,7 @@ public class AssignmentController {
     private String uploadDir;
 
 
-    // ── Layer 1: Get all grade-sections that have assignments (dashboard cards) ──
+    //  Layer 1: Get all grade-sections that have assignments (dashboard cards)
 
     @GetMapping("/dashboard")
     @Transactional
@@ -63,14 +63,14 @@ public class AssignmentController {
         return result;
     }
 
-    // ── Layer 2: Get assignments for a grade-section ───────────────────────────
+    //  Layer 2: Get assignments for a grade-section
 
     @GetMapping("/grade/{gsId}")
     public List<Map<String, Object>> getByGrade(@PathVariable Long gsId) {
         return repo.findByGradeSectionId(gsId).stream().map(this::toMap).toList();
     }
 
-    // ── Layer 3: Get student submissions for an assignment ────────────────────
+    // Layer 3: Get student submissions for an assignment
 
     @GetMapping("/{aId}/submissions")
     @Transactional
@@ -143,7 +143,7 @@ public class AssignmentController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // ── Mark ALL students as DONE for an assignment ───────────────────────────
+    // Mark ALL students as DONE for an assignment
 
     @PatchMapping("/{aId}/mark-all-done")
     @Transactional
@@ -159,7 +159,7 @@ public class AssignmentController {
         return ResponseEntity.ok(Map.of("message", "All marked as DONE", "count", all.size()));
     }
 
-    // ── Create assignment with optional file upload ───────────────────────────
+    //  Create assignment with optional file upload
 
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE})
     @Transactional
@@ -203,7 +203,7 @@ public class AssignmentController {
         return ResponseEntity.ok(toMap(saved));
     }
 
-    // ── Download / view assignment file ──────────────────────────────────────
+    // Download / view assignment file
 
     @GetMapping("/{id}/file")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) throws IOException {
@@ -242,7 +242,7 @@ public class AssignmentController {
         return ResponseEntity.ok(Map.of("message", "Deleted"));
     }
 
-    // ── Helper: save uploaded file to disk ───────────────────────────────────
+    //  Helper: save uploaded file to disk
 
     private String saveFile(MultipartFile file, String subDir) {
         try {

@@ -393,7 +393,7 @@ import java.util.*;
 public class StudentController {
 
     @Autowired private StudentRepository repo;
-    @Autowired private FacultyDetailRepository fdRepo;
+    @Autowired private ProgramRepository fdRepo;
     @Autowired private GradeSectionMappingRepository gsRepo;
     @Autowired private ResultRepository resultRepo;
     @Autowired private MarksRepository marksRepo;
@@ -404,9 +404,7 @@ public class StudentController {
     /**
      * Builds a lowercase, trimmed composite key from the 5 identity fields.
      * Used as the element in the HashSet for duplicate detection.
-
      * Algorithm: String concatenation with pipe separator
-     * Time complexity: O(1) — fixed number of fields
      */
     private String buildDuplicateKey(String name, String guardianName,
                                      String contact, Long facultyDetailsId,
@@ -420,27 +418,24 @@ public class StudentController {
 
     /**
      * Builds a HashSet of composite keys from all existing students in DB.
-     * Used before any insert (single or bulk) to detect duplicates in O(1).
-     *
+     * Used before any insert (single or bulk) to detect duplicates in
      * Algorithm: HashMap → HashSet population
-     * Time complexity: O(n) to build once, then O(1) per lookup
      */
     private Set<String> buildExistingKeySet() {
         // HashMap: id → compositeKey (intermediate — used to populate HashSet)
         // HashSet: stores all unique composite keys for O(1) contains() check
         Set<String> existingKeys = new HashSet<>();
         for (Student s : repo.findAll()) {
-            Long fdId = s.getFacultyDetail() != null ? s.getFacultyDetail().getId() : null;
+            Long fdId = s.getProgram() != null ? s.getProgram().getId() : null;
             Long gsId = s.getGradeSection() != null ? s.getGradeSection().getId() : null;
             String key = buildDuplicateKey(s.getName(), s.getGuardianName(),
                     s.getContact(), fdId, gsId);
-            // HashSet.add() — O(1) average, ignores duplicates automatically
+            // HashSet.add()  average, ignores duplicates automatically
             existingKeys.add(key);
         }
         return existingKeys;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping
     public List<Map<String, Object>> getAll() {
@@ -473,10 +468,10 @@ public class StudentController {
         Map<Long, Map<String, Object>> programMap = new LinkedHashMap<>();
 
         for (Student s : all) {
-            // ── Program grouping ──────────────────────────────────────────────
+            // Program grouping
             // HashMap.putIfAbsent() → O(1) — creates group only on first encounter
-            Long programId = s.getFacultyDetail() != null ? s.getFacultyDetail().getId() : 0L;
-            String programName = s.getFacultyDetail() != null ? s.getFacultyDetail().getName() : "Unassigned";
+            Long programId = s.getProgram() != null ? s.getProgram().getId() : 0L;
+            String programName = s.getProgram() != null ? s.getProgram().getName() : "Unassigned";
 
             programMap.putIfAbsent(programId, new LinkedHashMap<>(Map.of(
                     "programId", programId,
@@ -486,7 +481,7 @@ public class StudentController {
             )));
             Map<String, Object> progGroup = programMap.get(programId); // O(1)
 
-            // ── Grade grouping ────────────────────────────────────────────────
+            //Grade grouping
             // Nested HashMap.putIfAbsent() → O(1)
             Long gradeId = (s.getGradeSection() != null && s.getGradeSection().getGrade() != null)
                     ? s.getGradeSection().getGrade().getId() : 0L;
@@ -527,11 +522,10 @@ public class StudentController {
 
     /**
      * Single student add with duplicate detection.
-     *
      * Algorithm:
-     * 1. Build HashSet of existing composite keys — O(n)
-     * 2. Build new student's composite key — O(1)
-     * 3. HashSet.contains() check — O(1)
+     * 1. Build HashSet of existing composite keys
+     * 2. Build new student's composite key
+     * 3. HashSet.contains() check
      * 4. If duplicate → reject with 409 Conflict
      * 5. If unique → save
      */
@@ -550,10 +544,10 @@ public class StudentController {
         if (name == null || name.trim().isEmpty())
             return ResponseEntity.badRequest().body(Map.of("message", "Name is required"));
 
-        // Step 1: Build HashSet of all existing keys — O(n)
+        // Step 1: Build HashSet of all existing keys
         Set<String> existingKeys = buildExistingKeySet();
 
-        // Step 2 & 3: Build and check new student's key — O(1)
+        // Step 2 & 3: Build and check new student's key
         String newKey = buildDuplicateKey(name, guardianName, contact, fdId, gsId);
         if (existingKeys.contains(newKey)) {
             // Duplicate detected — all 5 fields match an existing student
@@ -572,7 +566,7 @@ public class StudentController {
                 .contact(contact)
                 .email(email)
                 .build();
-        if (fdId != null) fdRepo.findById(fdId).ifPresent(s::setFacultyDetail);
+        if (fdId != null) fdRepo.findById(fdId).ifPresent(s::setProgram);
         if (gsId != null) gsRepo.findById(gsId).ifPresent(s::setGradeSection);
         return ResponseEntity.ok(toMap(repo.save(s)));
     }
@@ -594,7 +588,7 @@ public class StudentController {
             Set<String> existingKeys = buildExistingKeySet();
 
             // Remove own current key so self-update doesn't trigger false duplicate
-            Long currentFdId = s.getFacultyDetail() != null ? s.getFacultyDetail().getId() : null;
+            Long currentFdId = s.getProgram() != null ? s.getProgram().getId() : null;
             Long currentGsId = s.getGradeSection() != null ? s.getGradeSection().getId() : null;
             String ownKey = buildDuplicateKey(s.getName(), s.getGuardianName(),
                     s.getContact(), currentFdId, currentGsId);
@@ -613,7 +607,7 @@ public class StudentController {
             if (guardianName != null) s.setGuardianName(guardianName);
             if (contact != null) s.setContact(contact);
             if (body.get("email") != null) s.setEmail((String) body.get("email"));
-            if (fdId != null) fdRepo.findById(fdId).ifPresent(s::setFacultyDetail);
+            if (fdId != null) fdRepo.findById(fdId).ifPresent(s::setProgram);
             if (gsId != null) gsRepo.findById(gsId).ifPresent(s::setGradeSection);
             return ResponseEntity.ok(toMap(repo.save(s)));
         }).orElse(ResponseEntity.notFound().build());
@@ -622,7 +616,6 @@ public class StudentController {
 
     /**
      * Delete a student and ALL their related data.
-     *
      * Correct deletion order (must follow FK chain):
      *   1. result_marks  — join table, references both results and marks
      *   2. results       — references student
@@ -630,7 +623,6 @@ public class StudentController {
      *   4. assignment_student — references student
      *   5. remarks       — references student
      *   6. student       — finally safe to delete
-     *
      * Uses native SQL for steps 1-2 to bypass Hibernate flush-order issues
      * that caused the previous FK constraint violation.
      */
@@ -670,7 +662,6 @@ public class StudentController {
             Sheet programSheet = wb.createSheet("Programs_Reference");
             Sheet gradeSheet   = wb.createSheet("Grades_Reference");
 
-            // ── Header style ──────────────────────────────────────────────────
             CellStyle headerStyle = wb.createCellStyle();
             Font headerFont = wb.createFont();
             headerFont.setBold(true);
@@ -678,15 +669,14 @@ public class StudentController {
             headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-            // ── Note style (orange) ───────────────────────────────────────────
+
             CellStyle noteStyle = wb.createCellStyle();
             Font noteFont = wb.createFont();
             noteFont.setItalic(true);
             noteFont.setColor(IndexedColors.DARK_RED.getIndex());
             noteStyle.setFont(noteFont);
 
-            // ── Students sheet — columns use NAMES not IDs ────────────────────
-            // Column order: Name | Address | GuardianName | Contact | Email | ProgramName | GradeName | SectionName
+            // Students sheet — columns use NAMES not IDs
             String[] cols = {
                     "Name*", "Address", "GuardianName", "Contact", "Email",
                     "ProgramName*", "GradeName*", "SectionName"
@@ -718,7 +708,7 @@ public class StudentController {
             sample.createCell(4).setCellValue("student@example.com");
 
             // Fill sample program/grade from DB if available
-            List<FacultyDetail> programs = fdRepo.findAll();
+            List<Program> programs = fdRepo.findAll();
             List<GradeSectionMapping> gradeSections = gsRepo.findAll();
             if (!programs.isEmpty())
                 sample.createCell(5).setCellValue(programs.get(0).getName());
@@ -734,18 +724,18 @@ public class StudentController {
                 sample.createCell(7).setCellValue("e.g. A");
             }
 
-            // ── Programs reference sheet ──────────────────────────────────────
+            //  Programs reference sheet
             Row ph = programSheet.createRow(0);
             Cell phc0 = ph.createCell(0); phc0.setCellValue("ProgramName (use exactly as written)");
             phc0.setCellStyle(headerStyle);
             programSheet.setColumnWidth(0, 12000);
 
             int pr = 1;
-            for (FacultyDetail fd : programs) {
+            for (Program fd : programs) {
                 programSheet.createRow(pr++).createCell(0).setCellValue(fd.getName());
             }
 
-            // ── Grades reference sheet ────────────────────────────────────────
+            //  Grades reference sheet
             Row gh = gradeSheet.createRow(0);
             Cell ghc0 = gh.createCell(0); ghc0.setCellValue("GradeName");   ghc0.setCellStyle(headerStyle);
             Cell ghc1 = gh.createCell(1); ghc1.setCellValue("SectionName"); ghc1.setCellStyle(headerStyle);
@@ -775,23 +765,17 @@ public class StudentController {
 
     /**
      * Bulk upload students from Excel using NAMES (not IDs).
-     *
      * Algorithm — HashMap for name-to-ID lookup:
-     *
      * Phase 0: Build two HashMaps from DB for O(1) name→ID resolution:
      *   programMap:      HashMap<lowerCaseName, FacultyDetail>
      *   gradeSectionMap: HashMap<"gradeName|sectionName", GradeSectionMapping>
-     *
-     * Phase 1: Build HashSet of existing composite keys from DB — O(n)
-     *
+     * Phase 1: Build HashSet of existing composite keys from DB
      * Phase 2: For each Excel row:
-     *   a. Resolve program name → ID using HashMap.get() — O(1)
-     *   b. Resolve grade+section name → ID using HashMap.get() — O(1)
-     *   c. Check duplicate using HashSet — O(1)
-     *   d. Check intra-file duplicate using session HashMap — O(1)
+     *   a. Resolve program name → ID using HashMap.get()
+     *   b. Resolve grade+section name → ID using HashMap.get()
+     *   c. Check duplicate using HashSet —
+     *   d. Check intra-file duplicate using session HashMap
      *   e. Save if unique
-     *
-     * Total: O(n + m), n = DB students, m = Excel rows
      */
     @PostMapping("/bulk-upload")
     @Transactional
@@ -803,11 +787,11 @@ public class StudentController {
         List<String> duplicates = new ArrayList<>();
         List<String> errors     = new ArrayList<>();
 
-        // ── Phase 0: Build HashMaps from DB for O(1) name lookup ─────────────
+        //  Phase 0: Build HashMaps from DB for O(1) name lookup
 
         // HashMap: programName (lowercase) → FacultyDetail entity
-        Map<String, FacultyDetail> programMap = new HashMap<>();
-        for (FacultyDetail fd : fdRepo.findAll())
+        Map<String, Program> programMap = new HashMap<>();
+        for (Program fd : fdRepo.findAll())
             programMap.put(fd.getName().trim().toLowerCase(), fd);
 
         // HashMap: "gradeName|sectionName" (lowercase) → GradeSectionMapping entity
@@ -823,16 +807,16 @@ public class StudentController {
                 gradeSectionMap.put(gradeName + "|", gs);
         }
 
-        // ── Phase 1: Build HashSet of existing composite keys ────────────────
-        Set<String> existingKeys = buildExistingKeySet(); // O(n)
+        // Phase 1: Build HashSet of existing composite keys
+        Set<String> existingKeys = buildExistingKeySet();
 
-        // ── Phase 2: HashMap for intra-file duplicate detection ──────────────
+        // Phase 2: HashMap for intra-file duplicate detection
         Map<String, Integer> sessionKeys = new HashMap<>();
 
         try (InputStream is = file.getInputStream(); Workbook wb = new XSSFWorkbook(is)) {
             Sheet sheet = wb.getSheetAt(0);
 
-            for (int i = 2; i <= sheet.getLastRowNum(); i++) { // start at row 2 (skip header + note)
+            for (int i = 2; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
 
@@ -848,10 +832,10 @@ public class StudentController {
                 String gradeName    = getCellString(row.getCell(6)).toLowerCase().trim();
                 String sectionName  = getCellString(row.getCell(7)).toLowerCase().trim();
 
-                // ── Resolve program name → entity using HashMap — O(1) ───────
-                FacultyDetail fd = null;
+                // Resolve program name → entity using HashMap
+                Program fd = null;
                 if (!programName.isBlank()) {
-                    fd = programMap.get(programName); // O(1) HashMap lookup
+                    fd = programMap.get(programName);
                     if (fd == null) {
                         errors.add("Row " + (i + 1) + ": Program '" + getCellString(row.getCell(5)) +
                                 "' does not exist. Check Programs_Reference sheet.");
@@ -860,7 +844,7 @@ public class StudentController {
                     }
                 }
 
-                // ── Resolve grade+section → entity using HashMap — O(1) ──────
+                // Resolve grade+section → entity using HashMap
                 GradeSectionMapping gs = null;
                 if (!gradeName.isBlank()) {
                     String gsKey = gradeName + "|" + sectionName;
@@ -877,7 +861,7 @@ public class StudentController {
                 Long fdId = fd != null ? fd.getId() : null;
                 Long gsId = gs != null ? gs.getId() : null;
 
-                // ── Duplicate check — O(1) ────────────────────────────────────
+                // Duplicate check
                 String key = buildDuplicateKey(name, guardianName, contact, fdId, gsId);
 
                 if (existingKeys.contains(key)) {
@@ -894,20 +878,20 @@ public class StudentController {
                     continue;
                 }
 
-                // ── Save unique student ───────────────────────────────────────
+                // Save unique student
                 try {
                     Student s = Student.builder()
                             .name(name.trim()).address(address)
                             .guardianName(guardianName).contact(contact).email(email)
                             .build();
-                    if (fd != null) s.setFacultyDetail(fd);
+                    if (fd != null) s.setProgram(fd);
                     if (gs != null) s.setGradeSection(gs);
 
                     repo.save(s);
 
                     // Add to both sets — prevents duplicates from later rows
-                    existingKeys.add(key);       // O(1)
-                    sessionKeys.put(key, i + 1); // O(1)
+                    existingKeys.add(key);
+                    sessionKeys.put(key, i + 1);
                     created++;
 
                 } catch (Exception e) {
@@ -935,7 +919,6 @@ public class StudentController {
 
 
 
-    // ─────────────────────────────────────────────────────────────────────────
 
     private String getCellString(Cell cell) {
         if (cell == null) return "";
@@ -955,9 +938,9 @@ public class StudentController {
         m.put("guardianName", s.getGuardianName());
         m.put("contact", s.getContact());
         m.put("email", s.getEmail());
-        if (s.getFacultyDetail() != null) {
-            m.put("facultyDetailsId", s.getFacultyDetail().getId());
-            m.put("facultyName", s.getFacultyDetail().getName());
+        if (s.getProgram() != null) {
+            m.put("facultyDetailsId", s.getProgram().getId());
+            m.put("facultyName", s.getProgram().getName());
         }
         if (s.getGradeSection() != null) {
             m.put("gradesId", s.getGradeSection().getId());

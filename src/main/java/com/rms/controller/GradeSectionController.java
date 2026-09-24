@@ -1,6 +1,7 @@
 package com.rms.controller;
 import com.rms.entity.*;
 import com.rms.repository.*;
+import com.rms.service.GradeSectionDeletionService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,7 @@ public class GradeSectionController {
     @Autowired private GradeRepository gradeRepo;
     @Autowired private SectionRepository sectionRepo;
     @Autowired private AssignmentRepository assignmentRepo;
-
+    @Autowired private GradeSectionDeletionService gradeSectionDeletionService;
     @GetMapping public List<Map<String,Object>> getAll() {
         return repo.findAll().stream().map(g -> {
             Map<String,Object> m = new LinkedHashMap<>();
@@ -38,11 +39,35 @@ public class GradeSectionController {
             return ResponseEntity.ok(repo.save(g));
         }).orElse(ResponseEntity.notFound().build());
     }
+//    @DeleteMapping("/{id}")
+//    @Transactional
+//    public ResponseEntity<?> delete(@PathVariable Long id) {
+//        // Delete child assignments before deleting the grade-section
+//        assignmentRepo.deleteByGradeSectionId(id);
+//        repo.deleteById(id);
+//        return ResponseEntity.ok(Map.of("message", "Deleted"));
+//    }
+
     @DeleteMapping("/{id}")
-    @Transactional
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        // Delete child assignments before deleting the grade-section
-        assignmentRepo.deleteByGradeSectionId(id);
-        repo.deleteById(id);
+    public ResponseEntity<?> delete(@PathVariable Long id,
+                                    @RequestParam(name = "force", defaultValue = "false") boolean force) {
+        if (!repo.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
+            gradeSectionDeletionService.deleteAndFlush(id, force);
+        } catch (com.rms.service.GradeSectionDeletionService.BlockedByStudentsException e) {
+            return ResponseEntity.status(409).body(Map.of(
+                    "message", "This grade-section has " + e.studentCount +
+                            " student(s) enrolled. Delete anyway? They will be unenrolled, not deleted.",
+                    "requiresForce", true,
+                    "studentCount", e.studentCount
+            ));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.status(409).body(Map.of(
+                    "message", "Cannot delete this grade-section because it is still referenced elsewhere."
+            ));
+        }
         return ResponseEntity.ok(Map.of("message", "Deleted"));
-    }}
+    }
+}

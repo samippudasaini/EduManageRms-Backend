@@ -26,17 +26,41 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+//        userRepository.findByName("admin").ifPresentOrElse(existing -> {
+//            if (!passwordEncoder.matches("admin123", existing.getPassword())) {
+//                existing.setPassword(passwordEncoder.encode("admin123"));
+//                userRepository.save(existing);
+//                System.out.println("[DataSeeder] Existing 'admin' user had an invalid password hash - reset to 'admin123'.");
+//            }
+//        }, () -> {
+//            User admin = User.builder()
+//                    .name("admin")
+//                    .password(passwordEncoder.encode("admin123"))
+//                    .type("admin")
+//                    .build();
+//            userRepository.save(admin);
+//            System.out.println("[DataSeeder] Created default user 'admin' with password 'admin123'.");
+//        });
+//    }
         userRepository.findByName("admin").ifPresentOrElse(existing -> {
             if (!passwordEncoder.matches("admin123", existing.getPassword())) {
                 existing.setPassword(passwordEncoder.encode("admin123"));
                 userRepository.save(existing);
                 System.out.println("[DataSeeder] Existing 'admin' user had an invalid password hash - reset to 'admin123'.");
             }
+            if (existing.getSecurityQuestion() == null) {
+                existing.setSecurityQuestion("What is the name of this school management system?");
+                existing.setSecurityAnswer(passwordEncoder.encode("edumanage"));
+                userRepository.save(existing);
+                System.out.println("[DataSeeder] Seeded default recovery question for 'admin' (answer: edumanage). Change this from Account Settings.");
+            }
         }, () -> {
             User admin = User.builder()
                     .name("admin")
                     .password(passwordEncoder.encode("admin123"))
                     .type("admin")
+                    .securityQuestion("What is the name of this school management system?")
+                    .securityAnswer(passwordEncoder.encode("edumanage"))
                     .build();
             userRepository.save(admin);
             System.out.println("[DataSeeder] Created default user 'admin' with password 'admin123'.");

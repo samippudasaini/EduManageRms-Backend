@@ -104,8 +104,8 @@ public class StudentProfileController {
             profile.put("guardianName", student.getGuardianName());
             profile.put("contact", student.getContact());
 
-            if (student.getFacultyDetail() != null)
-                profile.put("facultyName", student.getFacultyDetail().getName());
+            if (student.getProgram() != null)
+                profile.put("facultyName", student.getProgram().getName());
             if (student.getGradeSection() != null) {
                 if (student.getGradeSection().getGrade() != null)
                     profile.put("gradeName", student.getGradeSection().getGrade().getName());

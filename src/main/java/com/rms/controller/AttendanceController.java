@@ -32,7 +32,7 @@ public class AttendanceController {
         }).toList();
     }
 
-    // ── Daily Grid: get full month grid ──────────────────────────────────────
+    // Daily Grid: get full month grid
 
 
     @GetMapping("/monthly/{gsId}")
@@ -130,8 +130,7 @@ public class AttendanceController {
         }
         return ResponseEntity.ok(resp);
     }
-    // ── Monthly Summary: per student, all months with totals ─────────────────
-
+    // Monthly Summary: per student, all months with totals
 
     @GetMapping("/summary/{gsId}")
     @Transactional
@@ -234,7 +233,7 @@ public class AttendanceController {
         return ResponseEntity.ok(resp);
     }
 
-    // ── Auto-save single cell (PATCH) ─────────────────────────────────────────
+    // Auto-save single cell (PATCH)
 
     @PatchMapping("/mark")
     @Transactional
@@ -268,8 +267,7 @@ public class AttendanceController {
         return ResponseEntity.ok(Map.of("studentId", studentId, "date", dateStr, "status", status));
     }
 
-    // ── Bulk mark all for a date ──────────────────────────────────────────────
-
+    // ── Bulk mark all for a date
     @PostMapping("/mark-all")
     @Transactional
     public ResponseEntity<?> markAll(@RequestBody Map<String, Object> body) {
@@ -288,7 +286,7 @@ public class AttendanceController {
         return ResponseEntity.ok(Map.of("message", "Done"));
     }
 
-    // ── Legacy endpoints (kept for backward compat) ───────────────────────────
+    //  Legacy endpoints (kept for backward compat)
 
     @GetMapping("/conduct/{gradeSectionId}")
     @Transactional

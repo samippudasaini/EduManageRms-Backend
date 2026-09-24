@@ -7,5 +7,6 @@ import java.util.List;
 public interface StreamRepository extends JpaRepository<Stream, Long> {
     @Query("SELECT s FROM Stream s LEFT JOIN FETCH s.faculty")
     List<Stream> findAllWithFaculty();
-//    List<Stream> findByFacultyId(Long facultyId);
+
+    List<Stream> findByFacultyId(Long facultyId);
 }

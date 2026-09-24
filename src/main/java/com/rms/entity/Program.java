@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "faculty_details")
+@Table(name = "program_details")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FacultyDetail {
+public class Program {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,7 +23,6 @@ public class FacultyDetail {
     @JoinColumn(name = "streamId")
     private Stream stream;
 
-    @OneToMany(mappedBy = "facultyDetail", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @Builder.Default
-    private List<FacultyDetailSubject> subjectMappings = new ArrayList<>();
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)    @Builder.Default
+    private List<ProgramSubject> subjectMappings = new ArrayList<>();
 }
