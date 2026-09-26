@@ -14,4 +14,11 @@ public interface MarksRepository extends JpaRepository<Marks, Long> {
     @Transactional
     @Query("DELETE FROM Marks m WHERE m.id IN :ids")
     void deleteByIdIn(@Param("ids") List<Long> ids);
+
+    long countBySubjectId(Long subjectId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Marks m WHERE m.subject.id = :subjectId")
+    void deleteBySubjectId(@Param("subjectId") Long subjectId);
 }
