@@ -22,7 +22,7 @@ public class Student {
     private String email;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "faculty_details_id")
+    @JoinColumn(name = "program_id")
     private Program program;
 
     @ManyToOne(fetch = FetchType.EAGER)

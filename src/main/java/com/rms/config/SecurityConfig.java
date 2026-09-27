@@ -36,7 +36,7 @@ public class SecurityConfig {
                 )
             .authorizeHttpRequests(a -> a
 //                .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
-                    .requestMatchers("/api/auth/**", "/uploads/**", "/api/profile", "/api/profile/**","/api/programs").permitAll()
+                    .requestMatchers("/api/auth/**", "/uploads/**", "/api/profile", "/api/profile/**","/api/programs","/api/program-details").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

@@ -67,7 +67,7 @@ public class Result {
     private Examination examination;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "faculty_detail_id")
+    @JoinColumn(name = "program_id")
     private Program program;
 
     @ManyToOne(fetch = FetchType.LAZY)

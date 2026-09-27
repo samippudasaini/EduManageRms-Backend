@@ -112,12 +112,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM result_marks WHERE result_id IN " +
-            "(SELECT id FROM results WHERE faculty_detail_id = :fdId)",
+            "(SELECT id FROM results WHERE program_id = :fdId)",
             nativeQuery = true)
     void deleteResultMarksByProgramId(@Param("fdId") Long fdId);
 
     @Modifying
     @Transactional
-    @Query(value = "DELETE FROM results WHERE faculty_detail_id = :fdId", nativeQuery = true)
+    @Query(value = "DELETE FROM results WHERE program_id = :fdId", nativeQuery = true)
     void deleteResultsByProgramId(@Param("fdId") Long fdId);
 }

@@ -10,6 +10,10 @@ import java.util.List;
 public interface ExaminationRepository extends JpaRepository<Examination, Long> {
     List<Examination> findAllByOrderByIdDesc();
 
-    @Query("SELECT e FROM Examination e JOIN e.facultyDetails fd WHERE fd.id = :facultyDetailId")
-    List<Examination> findAllByFacultyDetailId(@Param("facultyDetailId") Long facultyDetailId);
+//    @Query("SELECT e FROM Examination e JOIN e.facultyDetails fd WHERE fd.id = :programId")
+//    List<Examination> findAllByFacultyDetailId(@Param("facultyDetailId") Long facultyDetailId);
+
+
+    @Query("SELECT e FROM Examination e JOIN e.programs p WHERE p.id = :programId")
+    List<Examination> findAllByProgramId(@Param("programId") Long programId);
 }

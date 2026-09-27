@@ -30,7 +30,7 @@ public class ExaminationController {
         return repo.findById(id).map(e -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", e.getId()); m.put("name", e.getName()); m.put("year", e.getYear());
-            List<Map<String, Object>> fds = e.getFacultyDetails().stream().map(fd -> {
+            List<Map<String, Object>> fds = e.getPrograms().stream().map(fd -> {
                 Map<String, Object> fm = new LinkedHashMap<>();
                 fm.put("id", fd.getId()); fm.put("name", fd.getName());
                 return fm;
@@ -71,9 +71,9 @@ public class ExaminationController {
         Examination exam = repo.findById(examId).orElseThrow(() -> new RuntimeException("Exam not found"));
         Program fd = fdRepo.findById(Long.parseLong(body.get("facultyDetailId").toString()))
                 .orElseThrow(() -> new RuntimeException("FacultyDetail not found"));
-        boolean alreadyExists = exam.getFacultyDetails().stream().anyMatch(f -> f.getId().equals(fd.getId()));
+        boolean alreadyExists = exam.getPrograms().stream().anyMatch(f -> f.getId().equals(fd.getId()));
         if (!alreadyExists) {
-            exam.getFacultyDetails().add(fd);
+            exam.getPrograms().add(fd);
             repo.save(exam);
             resultService.createResultsForExamination(exam, fd);
         }
@@ -83,7 +83,7 @@ public class ExaminationController {
     @DeleteMapping("/{examId}/faculty-details/{fdId}")
     public ResponseEntity<?> removeFacultyDetail(@PathVariable Long examId, @PathVariable Long fdId) {
         Examination exam = repo.findById(examId).orElseThrow();
-        exam.getFacultyDetails().removeIf(fd -> fd.getId().equals(fdId));
+        exam.getPrograms().removeIf(fd -> fd.getId().equals(fdId));
         repo.save(exam);
         return ResponseEntity.ok(Map.of("message", "Removed"));
     }

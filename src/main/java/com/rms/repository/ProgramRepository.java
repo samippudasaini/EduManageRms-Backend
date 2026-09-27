@@ -16,7 +16,7 @@ public interface ProgramRepository extends JpaRepository<Program, Long> {
 
     List<Program> findByStreamId(Long streamId);
     @Modifying
-    @Query(value = "DELETE FROM examinations_faculty_details WHERE faculty_detail_id = :id", nativeQuery = true)
+    @Query(value = "DELETE FROM examinations_program WHERE program_id = :id", nativeQuery = true)
     void detachFromExaminations(@Param("id") Long id);
 
 }

@@ -23,10 +23,10 @@ public class Examination {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-        name = "examinations_faculty_details",
+        name = "examinations_program",
         joinColumns = @JoinColumn(name = "examination_id"),
-        inverseJoinColumns = @JoinColumn(name = "faculty_detail_id")
+        inverseJoinColumns = @JoinColumn(name = "program_id")
     )
     @Builder.Default
-    private List<Program> facultyDetails = new ArrayList<>();
+    private List<Program> programs = new ArrayList<>();
 }

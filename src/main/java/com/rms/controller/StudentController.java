@@ -566,8 +566,28 @@ public class StudentController {
                 .contact(contact)
                 .email(email)
                 .build();
-        if (fdId != null) fdRepo.findById(fdId).ifPresent(s::setProgram);
-        if (gsId != null) gsRepo.findById(gsId).ifPresent(s::setGradeSection);
+//        if (fdId != null) fdRepo.findById(fdId).ifPresent(s::setProgram);
+//        if (gsId != null) gsRepo.findById(gsId).ifPresent(s::setGradeSection);
+//        return ResponseEntity.ok(toMap(repo.save(s)));
+
+        if (fdId != null) {
+            var program = fdRepo.findById(fdId).orElse(null);
+            if (program == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Selected program no longer exists. Please refresh and pick a program again."
+                ));
+            }
+            s.setProgram(program);
+        }
+        if (gsId != null) {
+            var gradeSection = gsRepo.findById(gsId).orElse(null);
+            if (gradeSection == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Selected grade-section no longer exists. Please refresh and pick again."
+                ));
+            }
+            s.setGradeSection(gradeSection);
+        }
         return ResponseEntity.ok(toMap(repo.save(s)));
     }
 
