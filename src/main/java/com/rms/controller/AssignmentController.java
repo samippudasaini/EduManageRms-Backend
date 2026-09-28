@@ -45,24 +45,31 @@ public class AssignmentController {
         List<Map<String, Object>> result = new ArrayList<>();
         for (GradeSectionMapping gs : sections) {
             List<Assignment> assignments = repo.findByGradeSectionId(gs.getId());
-            if (assignments.isEmpty()) continue;
+
+            // NOTE: classes with zero assignments are now included, otherwise
+            // there is no card to click and the first assignment can never be created.
             long pendingCount = 0;
+            long completedCount = 0;
             for (Assignment a : assignments) {
                 List<AssignmentStudent> submissions = asRepo.findByAssignmentId(a.getId());
                 pendingCount += submissions.stream()
                         .filter(s -> "PENDING".equals(s.getSubmissionStatus())).count();
+                completedCount += submissions.stream()
+                        .filter(s -> "SUBMITTED".equals(s.getSubmissionStatus())
+                                || "COMPLETED".equals(s.getSubmissionStatus())).count();
             }
+
             Map<String, Object> card = new LinkedHashMap<>();
             card.put("gradeSectionId", gs.getId());
             card.put("gradeName", gs.getGrade() != null ? gs.getGrade().getName() : "");
             card.put("sectionName", gs.getSection() != null ? gs.getSection().getName() : "");
             card.put("totalAssignments", assignments.size());
             card.put("pendingCount", pendingCount);
+            card.put("completedCount", completedCount);
             result.add(card);
         }
         return result;
     }
-
     //  Layer 2: Get assignments for a grade-section
 
     @GetMapping("/grade/{gsId}")

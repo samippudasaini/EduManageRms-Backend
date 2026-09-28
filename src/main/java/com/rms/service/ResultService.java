@@ -545,13 +545,13 @@ public class ResultService {
     @Transactional
     public void createResultsForExamination(Examination exam, Program p) {        // Get ALL students in this program
         List<Student> students = studentRepo.findByProgramId(p.getId());
-        System.out.println("[ResultService] Found " + students.size() +
-                " students for program_id=" + p.getId());
+//        System.out.println("[ResultService] Found " + students.size() +
+//                " students for program_id=" + p.getId());
 
         // Get ALL subjects for this program
         List<ProgramSubject> subjectMappings = fdsRepo.findByProgramId(p.getId());
-        System.out.println("[ResultService] Found " + subjectMappings.size() +
-                " subjects for faculty_detail_id=" + p.getId());
+//        System.out.println("[ResultService] Found " + subjectMappings.size() +
+//                " subjects for faculty_detail_id=" + p.getId());
 
         for (Student student : students) {
             // Check if result already exists
@@ -559,7 +559,7 @@ public class ResultService {
                     .findByExaminationIdAndProgramIdAndStudentId(
                             exam.getId(), p.getId(), student.getId());
             if (existing.isPresent()) {
-                System.out.println("[ResultService] Result already exists for student=" + student.getName());
+//                System.out.println("[ResultService] Result already exists for student=" + student.getName());
                 continue;
             }
 
@@ -587,8 +587,8 @@ public class ResultService {
                 saved.getMarks().add(savedMarks);
             }
             resultRepo.save(saved);
-            System.out.println("[ResultService] Created result with " +
-                    subjectMappings.size() + " marks for student=" + student.getName());
+//            System.out.println("[ResultService] Created result with " +
+//                    subjectMappings.size() + " marks for student=" + student.getName());
         }
     }
 
@@ -641,7 +641,7 @@ public class ResultService {
     @Transactional
     public List<Map<String, Object>> getResultsWithMarks(Long examId, Long fdId) {
         List<Result> results = resultRepo.findByExaminationIdAndProgramId(examId, fdId);
-        System.out.println("[ResultService] getResultsWithMarks: found " + results.size() + " results");
+//        System.out.println("[ResultService] getResultsWithMarks: found " + results.size() + " results");
         List<Map<String, Object>> data = new ArrayList<>();
         for (Result result : results) {
             Map<String, Object> rd = new LinkedHashMap<>();
